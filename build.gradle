@@ -1,0 +1,64 @@
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'idea'
+apply plugin: 'jacoco'
+apply plugin: 'java-library-distribution'
+
+repositories {
+    mavenCentral()
+}
+
+sourceSets {
+    integrationTest {
+        java {
+            compileClasspath += main.output + test.output
+            runtimeClasspath += main.output + test.output
+            srcDir file('src/integration-test/java')
+        }
+        resources.srcDir file('src/integration-test/resources')
+    }
+}
+
+configurations {
+    integrationTestCompile.extendsFrom testCompile
+    integrationTestRuntime.extendsFrom testRuntime
+}
+
+dependencies {
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+    testCompile group: 'org.assertj', name: 'assertj-core', version: '3.9.1'
+    testCompile group: 'org.mockito', name: 'mockito-core', version: '2.16.0'
+    compile group: 'com.scalar-labs', name: 'scalardb', version: '2.0.0'
+    compile(group: 'org.apache.phoenix', name: 'phoenix-core', version: '5.0.0-HBase-2.0') {
+        exclude group: 'io.netty'
+        exclude group: 'org.apache.hbase'
+    }
+    compile(group: 'org.apache.hbase', name: 'hbase-server', version: '2.0.6') {
+        exclude group: 'io.netty'
+    }
+    testCompile(group: 'org.apache.hbase', name: 'hbase-server', version: '2.0.6', classifier: "tests") {
+        exclude group: 'io.netty'
+    }
+    testCompile group: 'org.apache.hbase', name: 'hbase-common', version: '2.0.6', classifier: "tests"
+    testCompile group: 'org.apache.hbase', name: 'hbase-zookeeper', version: '2.0.6', classifier: "tests"
+    testCompile group: 'org.apache.hbase', name: 'hbase-hadoop-compat', version: '2.0.6', classifier: "tests"
+    testCompile group: 'org.apache.hbase', name: 'hbase-hadoop2-compat', version: '2.0.6', classifier: "tests"
+    testCompile(group: 'org.apache.hadoop', name: 'hadoop-minicluster', version: '3.0.0') {
+        exclude group: 'io.netty'
+    }
+}
+
+task integrationTest(type: Test) {
+    description = 'Runs the integration tests.'
+    group = 'verification'
+    testClassesDirs = sourceSets.integrationTest.output.classesDirs
+    classpath = sourceSets.integrationTest.runtimeClasspath
+    outputs.upToDateWhen { false }  // ensures integration tests are run every time when called
+    shouldRunAfter test
+}
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+group = "com.scalar-labs"
+archivesBaseName = "scalardb-phoenix"
